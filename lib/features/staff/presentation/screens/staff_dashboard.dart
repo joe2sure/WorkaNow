@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'dart:async';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/app_date_utils.dart';
 import '../../../auth/providers/auth_provider.dart';
+import '../../data/models/payroll_model.dart';
 import '../../providers/staff_provider.dart';
 import '../../data/models/attendance_model.dart';
 import '../../../ai/providers/ai_provider.dart';
@@ -762,24 +765,49 @@ class _LocationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Lagos coordinates (Victoria Island area)
+    const LatLng lagosLocation = LatLng(6.4281, 3.4219);
+    
     return Container(
-      height: 180,
+      height: 200,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.outline.withOpacity(0.5)),
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(15),
         child: Stack(
           children: [
-            // Map placeholder (replace with GoogleMap widget in production)
-            Container(
-              color: const Color(0xFFE8F0FE),
-              child: CustomPaint(
-                painter: _MapPainter(),
-                size: Size.infinite,
+            // OpenStreetMap
+            FlutterMap(
+              options: const MapOptions(
+                initialCenter: lagosLocation,
+                initialZoom: 15.0,
+                interactionOptions: InteractionOptions(
+                  flags: InteractiveFlag.none, // Read-only map for dashboard
+                ),
               ),
+              children: [
+                TileLayer(
+                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  userAgentPackageName: 'com.example.app',
+                ),
+                const MarkerLayer(
+                  markers: [
+                    Marker(
+                      point: lagosLocation,
+                      width: 40,
+                      height: 40,
+                      child: Icon(
+                        Icons.location_pin,
+                        color: AppColors.primary,
+                        size: 36,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
             // Location overlay
             Positioned(
@@ -844,19 +872,6 @@ class _LocationCard extends StatelessWidget {
                 ),
               ),
             ),
-            // Map marker
-            const Positioned(
-              top: 55,
-              left: 0,
-              right: 0,
-              child: Center(
-                child: Icon(
-                  Icons.location_pin,
-                  color: AppColors.primary,
-                  size: 36,
-                ),
-              ),
-            ),
           ],
         ),
       ),
@@ -864,46 +879,155 @@ class _LocationCard extends StatelessWidget {
   }
 }
 
-class _MapPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = const Color(0xFFD4E3FC)
-      ..style = PaintingStyle.fill;
+
+// class _LocationCard extends StatelessWidget {
+//   final StaffProvider staff;
+//   const _LocationCard({required this.staff});
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return Container(
+//       height: 180,
+//       decoration: BoxDecoration(
+//         color: Colors.white,
+//         borderRadius: BorderRadius.circular(16),
+//         border: Border.all(color: AppColors.outline.withOpacity(0.5)),
+//       ),
+//       child: ClipRRect(
+//         borderRadius: BorderRadius.circular(16),
+//         child: Stack(
+//           children: [
+//             // Map placeholder (replace with GoogleMap widget in production)
+//             Container(
+//               color: const Color(0xFFE8F0FE),
+//               child: CustomPaint(
+//                 painter: _MapPainter(),
+//                 size: Size.infinite,
+//               ),
+//             ),
+//             // Location overlay
+//             Positioned(
+//               left: 0,
+//               right: 0,
+//               bottom: 0,
+//               child: Container(
+//                 padding: const EdgeInsets.all(12),
+//                 decoration: const BoxDecoration(
+//                   color: Colors.white,
+//                   borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+//                 ),
+//                 child: Row(
+//                   children: [
+//                     Container(
+//                       padding: const EdgeInsets.all(6),
+//                       decoration: BoxDecoration(
+//                         color: staff.isLocationVerified
+//                             ? AppColors.successLight
+//                             : AppColors.warningLight,
+//                         borderRadius: BorderRadius.circular(8),
+//                       ),
+//                       child: Icon(
+//                         staff.isLocationVerified
+//                             ? Icons.location_on
+//                             : Icons.location_searching,
+//                         color: staff.isLocationVerified
+//                             ? AppColors.success
+//                             : AppColors.warning,
+//                         size: 18,
+//                       ),
+//                     ),
+//                     const SizedBox(width: 10),
+//                     Expanded(
+//                       child: Column(
+//                         crossAxisAlignment: CrossAxisAlignment.start,
+//                         children: [
+//                           Text(
+//                             staff.isLocationVerified
+//                                 ? 'Location Verified ✓'
+//                                 : 'Location Not Verified',
+//                             style: TextStyle(
+//                               fontWeight: FontWeight.w600,
+//                               fontSize: 13,
+//                               color: staff.isLocationVerified
+//                                   ? AppColors.success
+//                                   : AppColors.warning,
+//                             ),
+//                           ),
+//                           Text(
+//                             staff.currentLocation ??
+//                                 '15 Marina Road, Victoria Island, Lagos',
+//                             style: const TextStyle(
+//                                 color: AppColors.textSecondary, fontSize: 11),
+//                             maxLines: 1,
+//                             overflow: TextOverflow.ellipsis,
+//                           ),
+//                         ],
+//                       ),
+//                     ),
+//                   ],
+//                 ),
+//               ),
+//             ),
+//             // Map marker
+//             const Positioned(
+//               top: 55,
+//               left: 0,
+//               right: 0,
+//               child: Center(
+//                 child: Icon(
+//                   Icons.location_pin,
+//                   color: AppColors.primary,
+//                   size: 36,
+//                 ),
+//               ),
+//             ),
+//           ],
+//         ),
+//       ),
+//     );
+//   }
+// }
+
+// class _MapPainter extends CustomPainter {
+//   @override
+//   void paint(Canvas canvas, Size size) {
+//     final paint = Paint()
+//       ..color = const Color(0xFFD4E3FC)
+//       ..style = PaintingStyle.fill;
     
-    // Roads
-    final roadPaint = Paint()
-      ..color = Colors.white
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 6;
+//     // Roads
+//     final roadPaint = Paint()
+//       ..color = Colors.white
+//       ..style = PaintingStyle.stroke
+//       ..strokeWidth = 6;
 
-    // Draw simple map grid
-    for (double x = 0; x < size.width; x += 40) {
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), roadPaint);
-    }
-    for (double y = 0; y < size.height; y += 40) {
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), roadPaint);
-    }
+//     // Draw simple map grid
+//     for (double x = 0; x < size.width; x += 40) {
+//       canvas.drawLine(Offset(x, 0), Offset(x, size.height), roadPaint);
+//     }
+//     for (double y = 0; y < size.height; y += 40) {
+//       canvas.drawLine(Offset(0, y), Offset(size.width, y), roadPaint);
+//     }
 
-    // Draw some "buildings"
-    final buildingPaint = Paint()
-      ..color = const Color(0xFFB8CEF9)
-      ..style = PaintingStyle.fill;
+//     // Draw some "buildings"
+//     final buildingPaint = Paint()
+//       ..color = const Color(0xFFB8CEF9)
+//       ..style = PaintingStyle.fill;
 
-    canvas.drawRect(const Rect.fromLTWH(10, 10, 28, 28), buildingPaint);
-    canvas.drawRect(const Rect.fromLTWH(52, 10, 36, 28), buildingPaint);
-    canvas.drawRect(const Rect.fromLTWH(10, 50, 20, 36), buildingPaint);
-    canvas.drawRect(const Rect.fromLTWH(92, 50, 28, 20), buildingPaint);
-    canvas.drawRect(const Rect.fromLTWH(130, 10, 24, 36), buildingPaint);
-    canvas.drawRect(const Rect.fromLTWH(170, 30, 20, 28), buildingPaint);
-    canvas.drawRect(const Rect.fromLTWH(200, 10, 32, 20), buildingPaint);
-    canvas.drawRect(const Rect.fromLTWH(52, 90, 28, 24), buildingPaint);
-    canvas.drawRect(const Rect.fromLTWH(130, 90, 36, 28), buildingPaint);
-  }
+//     canvas.drawRect(const Rect.fromLTWH(10, 10, 28, 28), buildingPaint);
+//     canvas.drawRect(const Rect.fromLTWH(52, 10, 36, 28), buildingPaint);
+//     canvas.drawRect(const Rect.fromLTWH(10, 50, 20, 36), buildingPaint);
+//     canvas.drawRect(const Rect.fromLTWH(92, 50, 28, 20), buildingPaint);
+//     canvas.drawRect(const Rect.fromLTWH(130, 10, 24, 36), buildingPaint);
+//     canvas.drawRect(const Rect.fromLTWH(170, 30, 20, 28), buildingPaint);
+//     canvas.drawRect(const Rect.fromLTWH(200, 10, 32, 20), buildingPaint);
+//     canvas.drawRect(const Rect.fromLTWH(52, 90, 28, 24), buildingPaint);
+//     canvas.drawRect(const Rect.fromLTWH(130, 90, 36, 28), buildingPaint);
+//   }
 
-  @override
-  bool shouldRepaint(_) => false;
-}
+//   @override
+//   bool shouldRepaint(_) => false;
+// }
 
 // Staff Leave Request Page (simplified)
 class _LeaveRequestPage extends StatefulWidget {
